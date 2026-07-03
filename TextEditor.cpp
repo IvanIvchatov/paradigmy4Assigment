@@ -22,6 +22,14 @@ Text& TextEditor::active() {
     return *tabs[activeTab];
 }
 
+CipherType TextEditor::chooseCipherType() {
+    std::cout << "Cipher (1 = Caesar, 2 = Vigenere): ";
+    int choice = 0;
+    std::cin >> choice;
+    std::cin.ignore(10000, '\n');
+    return (choice == 1) ? CipherType::Caesar : CipherType::Vigenere;
+}
+
 void TextEditor::printMenu() {
     std::cout << "\n--- TEXT EDITOR  [Tab " << (activeTab + 1)
               << "/" << tabs.size() << ", " << active().size() << " lines] ---\n";
@@ -62,9 +70,12 @@ void TextEditor::addChecklist() {
 }
 
 void TextEditor::encryptAndSave() {
+    CipherType type = chooseCipherType();
+
     std::string path, key;
     std::cout << "Output file path: "; std::getline(std::cin, path);
-    std::cout << "Key: ";              std::getline(std::cin, key);
+    std::cout << (type == CipherType::Caesar ? "Key (number): " : "Key (word): ");
+    std::getline(std::cin, key);
 
     Cipher cipher;
     if (!cipher.isLoaded()) {
@@ -73,7 +84,7 @@ void TextEditor::encryptAndSave() {
     }
 
     std::string data = active().serializeAll();
-    std::string encrypted = cipher.encrypt(data, key);
+    std::string encrypted = cipher.encrypt(data, key, type);
 
     std::ofstream out(path, std::ios::binary);
     if (!out) {
@@ -86,9 +97,12 @@ void TextEditor::encryptAndSave() {
 }
 
 void TextEditor::loadAndDecrypt() {
+    CipherType type = chooseCipherType();
+
     std::string path, key;
     std::cout << "Input file path: "; std::getline(std::cin, path);
-    std::cout << "Key: ";             std::getline(std::cin, key);
+    std::cout << (type == CipherType::Caesar ? "Key (number): " : "Key (word): ");
+    std::getline(std::cin, key);
 
     std::ifstream in(path, std::ios::binary);
     if (!in) {
@@ -106,7 +120,7 @@ void TextEditor::loadAndDecrypt() {
         return;
     }
 
-    std::string data = cipher.decrypt(encrypted, key);
+    std::string data = cipher.decrypt(encrypted, key, type);
     active().deserializeAll(data);
 
     std::cout << "Loaded and decrypted text:\n";
